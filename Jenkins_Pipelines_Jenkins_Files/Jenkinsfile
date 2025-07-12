@@ -2,14 +2,14 @@ pipeline{
     agent any
     environment {
         NAME='Custom Jenkins Pipeline'
+        gitRepoUrl = 'https://github.com/longpham5/Jenkins_Upgradev3.git'
     }
     stages {
         stage('Checkout'){
             steps {
-                def gitRepoUrl = 'https://github.com/longpham5/Jenkins_Upgradev3.git'
                 checkout([$class: 'GitSCM', 
                     branches: [[name: '*/master']], 
-                    userRemoteConfigs: [[url: gitRepoUrl]], 
+                    userRemoteConfigs: [[url: "${gitRepoUrl}"]], 
                     extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]]
                 ])
             }
@@ -34,10 +34,10 @@ pipeline{
         }
     }
     post {
-        succeeded {
+        succeed {
             echo 'Pipeline succeeded!'
         }
-        failed {
+        failure {
             echo 'Pipeline failed!'
         }
     }
