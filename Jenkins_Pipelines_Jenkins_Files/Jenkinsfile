@@ -1,0 +1,44 @@
+pipeline{
+    agent any
+    environment {
+        NAME='Custom Jenkins Pipeline'
+    }
+    stages {
+        stage('Checkout'){
+            steps {
+                def gitRepoUrl = 'https://github.com/longpham5/Jenkins_Upgradev3.git'
+                checkout([$class: 'GitSCM', 
+                    branches: [[name: '*/master']], 
+                    userRemoteConfigs: [[url: gitRepoUrl]], 
+                    extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'CloneOption', noTags: false, shallow: true, depth: 1]]
+                ])
+            }
+        }
+        stage('Build'){
+            steps {
+                sh '''
+                echo "This is build stage of ${NAME}"
+                ls -l
+                '''
+            }
+        }
+        stage('Test'){
+            steps {
+                sh 'echo "This is test stage of ${NAME}"'
+            }
+        }
+        stage('Deploy'){
+            steps {
+                sh 'echo "This is deploy stage of ${NAME}"'
+            }
+        }
+    }
+    post {
+        succeeded {
+            echo 'Pipeline succeeded!'
+        }
+        failed {
+            echo 'Pipeline failed!'
+        }
+    }
+}
