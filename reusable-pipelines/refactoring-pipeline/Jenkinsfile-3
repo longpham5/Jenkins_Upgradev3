@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    environment {
+        RELEASE_VERSION = '1.1.0'
+        INT_VERSION = '1.0'
+    }
+    parameters {
+        booleanParam(name: 'RELEASE', defaultValue: false, description: 'Is this a Release Candidate?')
+    }
+    stages {
+        stage('Check Environment') {
+            steps {
+                sh '''
+                    git --version
+                    java -version
+                    mvn -version
+                '''
+            }
+        }
+        stage('Unit Test') {
+            steps {
+                dir('./java-tomcat-sample') {
+                    sh '''
+                        echo "Executing Unit Tests..."
+                        mvn test
+                    '''
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                script {
+                    def versionSuffix = sh(script: 'if [ "${RELEASE}" = false ]; then echo -n "${INT_VERSION}ci:${BUILD_NUMBER}"; else echo -n "${RELEASE_VERSION}:${BUILD_NUMBER}"; fi', returnStdout: true).trim()
+                    echo "Building version: ${INT_VERSION} with suffix: ${versionSuffix}"
+                    echo 'Mention your Application Build Code here!!!'
+                    dir('./java-tomcat-sample') {
+                        sh '''
+                            mvn versions:set -DnewVersion="${versionSuffix}"-SNAPSHOT
+                            mvn versions:update-child-modules
+                            mvn clean package
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Publish') {
+            when {
+                expression { return params.RELEASE }
+            }
+            steps {
+                archiveArtifacts('**/*.war')
+            }
+        }
+        post {
+            always {
+                cleanWs()
+            }
+        }
+    }
+}
